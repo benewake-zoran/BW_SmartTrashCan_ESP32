@@ -11,16 +11,20 @@
 
 
 void setup() {
-  // put your setup code here, to run once:
-Serial.begin(115200);
-BLE_init();
-
+Serial.begin(115200); //开启串口0
+BLE_init();           //蓝牙初始化
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-  getLidarData(&Lidar);
-  BLE_Serve();
-  Serial.print("长度为: ");
-  Serial.println(Lidar.distance);
+  
+
+   if(Lidar.receiveComplete == false);   //读取一个雷达数据包，并计算出长度信号强度等)
+  {
+    getLidarData(&Lidar) ;
+  }
+  if(Lidar.receiveComplete == true   )  
+  {
+    BLE_Serve();            //雷达广播服务函数
+  }
+   delay(700);                              // 延时 断帧
 }

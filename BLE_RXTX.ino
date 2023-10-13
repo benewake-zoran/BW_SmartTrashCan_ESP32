@@ -1,4 +1,5 @@
 /*
+   蓝牙相关初始化和服务函数   
    创建一个BLE服务器，一旦我们收到连接，将会周期性发送通知
    使用步骤：
    1. 创建一个 BLE Server
@@ -10,12 +11,13 @@
 */
 
 
-uint8_t txValue[] = "Dist:";                         //后面需要发送的值
+uint8_t txValue1[] = "Dist:";                         //后面需要发送的字符串strength
+uint8_t txValue2[] = "Strength:";  
 BLEServer *pServer = NULL;                   //BLEServer指针 pServer
 BLECharacteristic *pTxCharacteristic = NULL; //BLECharacteristic指针 pTxCharacteristic
 bool deviceConnected = false;                //本次连接状态
-bool oldDeviceConnected = false;             //上次连接状态d
-
+bool oldDeviceConnected = false;             //上次连接状态
+//设置UUID
 #define SERVICE_UUID "12a59900-17cc-11ec-9621-0242ac130002" // UART service UUID
 #define CHARACTERISTIC_UUID_RX "12a59e0a-17cc-11ec-9621-0242ac130002"
 #define CHARACTERISTIC_UUID_TX "12a5a148-17cc-11ec-9621-0242ac130002"
@@ -41,19 +43,70 @@ class MyCallbacks : public BLECharacteristicCallbacks
     {
         std::string rxValue = pCharacteristic->getValue(); //接收信息
 
-        if (rxValue.length() > 0)
+        if (rxValue.length() > 0) //如果收到了信息
         { //向串口输出收到的值
-            Serial.println("*********");
-            Serial.print("Received Value: ");
-            for (int i = 0; i < rxValue.length(); i++)
-              Serial.print(rxValue[i]);
-            Serial.println();
-            Serial.println("*********");
-        }
-    }
+            // Serial.println("*********");
+            // Serial.print("Received Value: ");
+            // for (int i = 0; i < rxValue.length(); i++){
+            //   Serial.print(rxValue[i]);
+            Keydate = rxValue[0];
+            // }
+            // Serial.println();
+            // Serial.println("*********");
+            
+            switch(Keydate)
+            {
+              case 'A' : modez = 1;break;
+              case 'B' : modez = 2;break;
+              case 'C' : modez = 3;break;
+              case 'D' : modez = 4;break;
+              case 'E' : modez = 5;break;
+              case 'F' : modez = 6;break;
+              case 'G' : modez = 7;break;
+            }
+            if(Keydate == 'S')     //如果松开按键
+            {
+                KeyFlag = modez;   //把按键信号存入标志位
+            }
+/*  按键处理函数，判断按键信号标志位。  摁下后分别实现什么操作，改变什么状态标志位  */
+            if(KeyFlag == 1)    //摁下第一个键切换连续和单次状态
+            {
+               Continuous_Single =! Continuous_Single;
+              if(Continuous_Single)  //发送切换指令给雷达
+              {
+                Serial.write(SetOne, 6);
+              }
+              else 
+              {
+                Serial.write(SetHundred, 6);
+              }
+                KeyFlag = 0 ; //清除标记位
+            }
+
+           if(KeyFlag == 2)  //按键2 摁下切换发送的是 距离还是信号强度
+           { 
+             Distance_Strength =! Distance_Strength;
+             KeyFlag = 0 ;
+             Lidar.receiveComplete = true  ;
+           }
+
+          if(KeyFlag == 3)  //按键4 恢复出厂设置
+           { 
+             Serial.write(Restore, 4); //
+             Serial.write(save, 4);
+             KeyFlag = 0 ;
+           }
+           if(KeyFlag == 7)  //摁下发送指令，让雷达传入一帧数据
+           { 
+             Serial.write(GetData, 6);
+             KeyFlag = 0 ;
+           }
+/********************************************************/
+       }
+  } 
 };
 
-void BLE_init()
+void BLE_init()  //蓝牙初始化
 {
     // 创建一个 BLE 设备
     BLEDevice::init("ESP32_BLE");   //蓝牙名称
@@ -71,51 +124,72 @@ void BLE_init()
     pServer->getAdvertising()->start(); // 开始广播
     Serial.println(" 等待一个客户端连接，且发送通知... ");
 }
-
-void BLE_Serve()
+/*
+  雷达广播服务
+  用来发送需要发送的数据
+*/
+void BLE_Serve() //
 {
         // 已连接
-    if (deviceConnected)
-    {  
-      //  for(int i=0 ;i<5;i++)
-      //  {
-        int TempData= Lidar.distance;
+ if (deviceConnected)
+  {    
+        //将雷达的距离或者信号强度数据转化成字符型存入数组
+        int TempData = 0;
+        if(!Distance_Strength) //根据状态选择发送的数据内容
+           TempData = Lidar.strength;
+          else
+           TempData = Lidar.distance;
+        //数据处理 将整型数据按位转化为字符型存入数组  
         int numCopy = TempData;
         int digitCount = 0;
          while (numCopy != 0) {
             numCopy /= 10;
             digitCount++;
          }       
-          uint8_t digits[3] = {0}; // 用于存放每一位数字的数组
+          uint8_t digits[4] = {0}; // 用于存放每一位数字的数组
           for (int i = 0; i < digitCount; i++) {
             digits[i] = (char)(TempData % 10 + '0');
             TempData /= 10;
            }
-          // Serial.print("长度000为: ");
+           if( digitCount == 0){
+              digits[0] = '0';
+              digitCount = 1;
+           }
+      //////////////////////////////////
+      if(Distance_Strength)  //发送文本内容
+      for(int i=0 ;i<5;i++)
+       {
+        pTxCharacteristic->setValue(&txValue1[i], 1); // 发送 "Dist:"  
+        pTxCharacteristic->notify();              // 广播
+       }
+       else
+          for(int i=0 ;i<9;i++)
+       {
+        pTxCharacteristic->setValue(&txValue2[i], 1); // 发送 "Strength:"  
+        pTxCharacteristic->notify();              
+       }
+       
        for (int i = digitCount - 1; i >= 0; i--) 
        {
-        pTxCharacteristic->setValue(&digits[i], 1); // 设置要发送的值为1
-        pTxCharacteristic->notify();              // 广播
-        //txValue++;                                // 数值自加1
-         
-          //Serial.print(digits[i]);
-        delay(1);
-       }
-        delay(200);                              // 如果有太多包要发送，蓝牙会堵塞
-        //Serial.println(" ??????\n ");
+        pTxCharacteristic->setValue(&digits[i], 1); // 发送 雷达距离数据
+        pTxCharacteristic->notify();             
+        Lidar.receiveComplete = false;
+       }   
     }
+
     //   断开连接
     if (!deviceConnected && oldDeviceConnected)
-    {
-        delay(500);                  // 留时间给蓝牙缓冲
+    {  
+        Serial.println(" 已断开连接 ");
+        delay(1000);                  // 留时间给蓝牙缓冲
         pServer->startAdvertising(); // 重新广播
         Serial.println(" 开始广播 ");
         oldDeviceConnected = deviceConnected;
     }
+
     //  正在连接
     if (deviceConnected && !oldDeviceConnected)
     {
-        // do stuff here on connecting
         oldDeviceConnected = deviceConnected;
     }
 }

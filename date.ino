@@ -1,6 +1,10 @@
 // #include <Arduino.h>
 // #include "date.h"
 // #include "main.h"
+/*
+   雷达数据接收和解析函数   
+*/
+
 
 void getLidarData( TF* Lidar)  //串口获取一帧数据，并计算距离，信号强度和记录成功计算的标志。
 { 
@@ -30,6 +34,55 @@ void getLidarData( TF* Lidar)  //串口获取一帧数据，并计算距离，�
     }
    } 
 }
+
+
+
+// void ContinuationDistance() //状态1
+// { 
+//   TempData = Lidar.distance;
+// }
+
+// void SingleDistance() //状态2
+// {
+// }
+
+// void ContinuationStrength() //状态3
+// {
+// }
+
+// void SingleStrength() //状态4
+// {
+// }
+
+
+// void RestoreFactory() //状态5
+// {
+// }
+
+// void GetVERSION() //状态6
+// {
+// }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // void setup() {
 //   // put your setup code here, to run once:
