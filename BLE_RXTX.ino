@@ -157,15 +157,15 @@ void BLE_Serve() //
            }
       //////////////////////////////////
       if(Distance_Strength)  //发送文本内容
-      for(int i=0 ;i<5;i++)
+    
        {
-        pTxCharacteristic->setValue(&txValue1[i], 1); // 发送 "Dist:"  
+        pTxCharacteristic->setValue("距离："); // 发送 "Dist:"  
         pTxCharacteristic->notify();              // 广播
        }
        else
-          for(int i=0 ;i<9;i++)
+          
        {
-        pTxCharacteristic->setValue(&txValue2[i], 1); // 发送 "Strength:"  
+        pTxCharacteristic->setValue("信号强度："); // 发送 "Strength:"  
         pTxCharacteristic->notify();              
        }
        
