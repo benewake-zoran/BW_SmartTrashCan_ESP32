@@ -69,6 +69,7 @@ void Printdist(int date)
 
 void EmptyAndFull( ) //状态1标记空和满
 { 
+  getLidarData(&Lidar) ;
   if(state1_KM == 0)
   {
     pTxCharacteristic->setValue("标记空状态"); // 
@@ -79,6 +80,8 @@ void EmptyAndFull( ) //状态1标记空和满
       KeyFlag = 0;
       getLidarData(&Lidar);
       EmptyDate = Lidar.distance;
+      EEPROM.write(40, EmptyDate);delay(1);  
+      EEPROM.commit();delay(1);  //在写好所有的更改之后，保存更改的数据
       state1_KM = 1;
     }
 
@@ -93,6 +96,8 @@ void EmptyAndFull( ) //状态1标记空和满
       KeyFlag = 0;   
       getLidarData(&Lidar);
       FullDate = Lidar.distance; 
+      EEPROM.write(20, FullDate) ;delay(1);  
+      EEPROM.commit();delay(1);  //在写好所有的更改之后，保存更改的数据
       state = 4;
     }       
   }   
@@ -129,14 +134,28 @@ void Escalation() //状态4上报
   //  Serial.print(Lidar.distance);
   //  Serial.println("  ");
 
-   //if(0<date<100)
-   Printdist(date);
-   pTxCharacteristic->setValue("%"); // 
-   pTxCharacteristic->notify();
+   if(date<80)
+   {
+    Printdist(date);
+    pTxCharacteristic->setValue("%"); // 
+    pTxCharacteristic->notify();
+   }
+   else
+   {
+    state = 5;
+   }
 }
 void  Earlywarning() //状态5预警
 {
-
+    float date;
+    getLidarData(&Lidar);
+    date = ( ( (float)EmptyDate - Lidar.distance ) / ( (float)EmptyDate - FullDate  ) )*100;
+    pTxCharacteristic->setValue("垃圾桶已满!"); // 
+    pTxCharacteristic->notify();
+    if(date<80)
+    {
+      state = 4;
+    }
 }
 
 

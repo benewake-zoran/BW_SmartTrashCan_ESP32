@@ -68,6 +68,15 @@ class MyCallbacks : public BLECharacteristicCallbacks
             {
                 KeyFlag = modez;   //把按键信号存入标志位
             }
+            if(KeyFlag == 3)     //如果松开按键
+            {
+                 EEPROM.write(20, 0);delay(1);  
+                 EEPROM.commit();delay(1);  //在写好所有的更改之后，保存更改的数据
+                 EEPROM.write(40, 0);delay(1);  
+                 EEPROM.commit();delay(1);  //在写好所有的更改之后，保存更改的数据
+                 state = 1;
+                 state1_KM= 0;
+            }
 /*  按键处理函数，判断按键信号标志位。  摁下后分别实现什么操作，改变什么状态标志位  */
           //   if(KeyFlag == 1)    //摁下第一个键切换连续和单次状态
           //   {
