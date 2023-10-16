@@ -37,9 +37,10 @@ uint8_t SetHundred[] ={0x5A, 0x06, 0x03 ,0x64, 0x00, 0x00}  ;
 
 
 char    Keydate = '0';
-uint8_t State = 1 ;   //状态编号
+int  EmptyDate = 0, FullDate = 0, SamplingDate = 0, EscalationDate = 0;//  空\满状态的雷达数据、采样间隔、上报间隔
+uint8_t state = 1 ;   //状态编号
 uint8_t KeyFlag = 0; //按键信号  KeyFlag
-uint8_t modez = 1;    //暂时存储ModeFlag的状态，等待按键松开后发来的‘S’
+uint8_t modez = 1,state1_KM=0;    //暂时存储KeyFlag的状态，等待按键松开后发来的‘S’
 uint8_t Continuous_Single = 0;  //储存 连续/单次 按键的状态
 uint8_t Distance_Strength = 0;  //储存 距离/强度 按键的状态
 #endif  

@@ -69,38 +69,38 @@ class MyCallbacks : public BLECharacteristicCallbacks
                 KeyFlag = modez;   //把按键信号存入标志位
             }
 /*  按键处理函数，判断按键信号标志位。  摁下后分别实现什么操作，改变什么状态标志位  */
-            if(KeyFlag == 1)    //摁下第一个键切换连续和单次状态
-            {
-               Continuous_Single =! Continuous_Single;
-              if(Continuous_Single)  //发送切换指令给雷达
-              {
-                Serial.write(SetOne, 6);
-              }
-              else 
-              {
-                Serial.write(SetHundred, 6);
-              }
-                KeyFlag = 0 ; //清除标记位
-            }
+          //   if(KeyFlag == 1)    //摁下第一个键切换连续和单次状态
+          //   {
+          //      Continuous_Single =! Continuous_Single;
+          //     if(Continuous_Single)  //发送切换指令给雷达
+          //     {
+          //       Serial.write(SetOne, 6);
+          //     }
+          //     else 
+          //     {
+          //       Serial.write(SetHundred, 6);
+          //     }
+          //       KeyFlag = 0 ; //清除标记位
+          //   }
 
-           if(KeyFlag == 2)  //按键2 摁下切换发送的是 距离还是信号强度
-           { 
-             Distance_Strength =! Distance_Strength;
-             KeyFlag = 0 ;
-             Lidar.receiveComplete = true  ;
-           }
+          //  if(KeyFlag == 2)  //按键2 摁下切换发送的是 距离还是信号强度
+          //  { 
+          //    Distance_Strength =! Distance_Strength;
+          //    KeyFlag = 0 ;
+          //    Lidar.receiveComplete = true  ;
+          //  }
 
-          if(KeyFlag == 3)  //按键4 恢复出厂设置
-           { 
-             Serial.write(Restore, 4); //
-             Serial.write(save, 4);
-             KeyFlag = 0 ;
-           }
-           if(KeyFlag == 7)  //摁下发送指令，让雷达传入一帧数据
-           { 
-             Serial.write(GetData, 6);
-             KeyFlag = 0 ;
-           }
+          // if(KeyFlag == 3)  //按键4 恢复出厂设置
+          //  { 
+          //    Serial.write(Restore, 4); //
+          //    Serial.write(save, 4);
+          //    KeyFlag = 0 ;
+          //  }
+          //  if(KeyFlag == 7)  //摁下发送指令，让雷达传入一帧数据
+          //  { 
+          //    Serial.write(GetData, 6);
+          //    KeyFlag = 0 ;
+          //  }
 /********************************************************/
        }
   } 
