@@ -11,8 +11,9 @@ void getLidarData( TF* Lidar)
   static char i = 0;
   char j = 0;
   int checksum = 0;
+  Lidar->receiveComplete = false; 
   static int rx[9] ;//= {0x59 ,0x59 ,0x2F ,0x00 ,0xC9 ,0x0B ,0x70 ,0x09 ,0x2E};
-   while (Serial.available() > 0) {
+  while (Serial.available() > 0) {
      rx[i] = Serial.read();
     if (rx[0] != 0x59) {
       i = 0;
@@ -64,7 +65,7 @@ void Printdist(int date)
        {
          pTxCharacteristic->setValue(&digits[i], 1); // 发送 雷达距离数据
          pTxCharacteristic->notify();             
-         Lidar.receiveComplete = false;
+         //Lidar.receiveComplete = false;
        }   
 }
 
@@ -74,43 +75,48 @@ void Printdist(int date)
 
 void EmptyAndFull( ) //状态1标记空和满
 { 
-  getLidarData(&Lidar) ;
+  
    if(TIM%2 == 0) //采样频率
    {
+    getLidarData(&Lidar) ;
+    if(Lidar.receiveComplete == true)          //接收成功
+    {
       if(state1_KM == 0)
-    {
-    pTxCharacteristic->setValue("标记空状态"); 
-    pTxCharacteristic->notify();
-    Printdist(Lidar.distance);
-    if(KeyFlag == 5)    //摁下确定键
-    {
-      KeyFlag = 0;
-      getLidarData(&Lidar);
-      EmptyDate = Lidar.distance;
-      EEPROM.write(40, EmptyDate);delay(1);  
-      EEPROM.commit();delay(1);  //更改垃圾桶空置状态的雷达数据
-      state1_KM = 1;
-    }
-  }
+      {
+       pTxCharacteristic->setValue("标记空状态"); 
+       pTxCharacteristic->notify();
+       Printdist(Lidar.distance);
+       if(KeyFlag == 5)    //摁下确定键
+       {
+         KeyFlag = 0;
+         getLidarData(&Lidar);
+         EmptyDate = Lidar.distance;
+         EEPROM.write(40, EmptyDate);delay(1);  
+         EEPROM.commit();delay(1);  //更改垃圾桶空置状态的雷达数据
+         state1_KM = 1;
+       }
+      }
 
-  if(state1_KM == 1)
-  {
-     pTxCharacteristic->setValue("标记满状态 "); // 
-     pTxCharacteristic->notify();
-     Printdist(Lidar.distance);
-     if(KeyFlag == 5)    //确定键
-     {
-      KeyFlag = 0;   
-      getLidarData(&Lidar);
-      FullDate = Lidar.distance; 
-      EEPROM.write(20, FullDate) ;delay(1);  
-      EEPROM.commit();delay(1);  //更改垃圾桶满溢状态的雷达数据
-      EEPROM.write(1, 1) ;delay(1);  
-      EEPROM.commit();delay(1);  //上电检测标志位，判断上电前有没有存有上次标记的数据
-      state = 4;
-     }       
-   }  
-   TIM++;
+      if(state1_KM == 1)
+      {
+        pTxCharacteristic->setValue("标记满状态 "); // 
+        pTxCharacteristic->notify();
+        Printdist(Lidar.distance);
+        if(KeyFlag == 5)    //确定键
+        {
+          KeyFlag = 0;   
+          getLidarData(&Lidar);
+          FullDate = Lidar.distance; 
+          EEPROM.write(20, FullDate) ;delay(1);  
+          EEPROM.commit();delay(1);  //更改垃圾桶满溢状态的雷达数据
+          EEPROM.write(1, 1) ;delay(1);  
+          EEPROM.commit();delay(1);  //上电检测标志位，判断上电前有没有存有上次标记的数据
+          state = 4;
+        }       
+      }     
+    }
+    
+    TIM++;
   } 
 }
 
@@ -184,19 +190,39 @@ void Escalation()
        TIM++;
    }
   date = ( ( (float)EmptyDate - Lidar.distance ) / ( (float)EmptyDate - FullDate  ) )*100; //转换成百分比
-  if(TIM1%EscalationDate == 0) //上报频率
+  if(Lidar.receiveComplete == true)  
   {
-    if(date<80)
-    {
+   if(TIM1%EscalationDate == 0) //上报频率
+   {
+     if(date<80)
+     {
        Printdist(date);
        pTxCharacteristic->setValue("%"); // 
        pTxCharacteristic->notify();      
+      }
+     else
+     {
+      pTxCharacteristic->setValue("垃圾桶已满!"); // 
+      pTxCharacteristic->notify();    
      }
-   else
-   {
-    pTxCharacteristic->setValue("垃圾桶已满!"); // 
-    pTxCharacteristic->notify();    
+    TIM1++;
    }
-   TIM1++;
   }
+}
+
+
+void Errorback()
+{
+    if(TIM2%2 == 0) //检查传感器错误并发送的频率
+   {
+     if(Lidar.receiveComplete == false)          //接收失败
+     {
+       pTxCharacteristic->setValue("未检测到雷达!"); 
+       pTxCharacteristic->notify();
+       getLidarData(&Lidar);
+     }
+     TIM2++;
+   }
+   
+
 }

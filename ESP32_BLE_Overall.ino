@@ -11,13 +11,14 @@
 #include "BLE_RXTX.h"
 
 hw_timer_t* timer= NULL;  //定义存放定时器的指针
-uint8_t TIM = 0 , TIM1 = 0 ; //定时器参数 用来给采样频率和上报频率做参数
+uint8_t TIM = 0 , TIM1 = 0 ,TIM2 = 0; //定时器参数 用来给采样频率和上报频率做参数
 void IRAM_ATTR onTimer();
 
 void setup() {
   Serial.begin(115200); //开启串口0
   EEPROM.begin(4096);    //申请空间，传入参数为size，为需要读写的数据字节最大地址+1，取值1~4096；
   BLE_init();           //蓝牙初始化
+  
   /*TIM_init*/
   timer = timerBegin(0, 80, true);  //设置定时器0，80分频，定时器是否上下计数
   timerAttachInterrupt(timer, onTimer, true);  //定时器地址指针，中断函数名称，中断边沿触发类型
@@ -38,8 +39,9 @@ void setup() {
     EscalationDate = EEPROM.read(80) ;
    }
    state = 4;
-
   }
+
+   getLidarData(&Lidar) ;
 }
 
 void loop() {
@@ -52,6 +54,9 @@ void loop() {
     case 4 :Escalation();break;        //采样上报、预警
   }
 
+  
+  
+   Errorback();//检测系统可能遇到的错误
 }
 
 
@@ -60,9 +65,11 @@ void IRAM_ATTR onTimer()
 {
    TIM++;   //采样间隔参数
    TIM1++;  //上报间隔参数
+   TIM2++;
    if(TIM>65536)
    {
     TIM  = TIM%SamplingDate;
     TIM1 = TIM1%EscalationDate;
+    TIM2 = 0;
    }
 }
