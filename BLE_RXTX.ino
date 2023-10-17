@@ -44,16 +44,8 @@ class MyCallbacks : public BLECharacteristicCallbacks
         std::string rxValue = pCharacteristic->getValue(); //接收信息
 
         if (rxValue.length() > 0) //如果收到了信息
-        { //向串口输出收到的值
-            // Serial.println("*********");
-            // Serial.print("Received Value: ");
-            // for (int i = 0; i < rxValue.length(); i++){
-            //   Serial.print(rxValue[i]);
-            Keydate = rxValue[0];
-            // }
-            // Serial.println();
-            // Serial.println("*********");
-            
+        {    
+            Keydate = rxValue[0];                 
             switch(Keydate)
             {
               case 'A' : modez = 1;break;
@@ -61,21 +53,42 @@ class MyCallbacks : public BLECharacteristicCallbacks
               case 'C' : modez = 3;break;
               case 'D' : modez = 4;break;
               case 'E' : modez = 5;break;
-              case 'F' : modez = 6;break;
-              case 'G' : modez = 7;break;
+              case 'G' : modez = 6;break;
+              case 'K' : modez = 7;break;
             }
             if(Keydate == 'S')     //如果松开按键
             {
                 KeyFlag = modez;   //把按键信号存入标志位
             }
-            if(KeyFlag == 3)     //如果松开按键
+    /**********************************************************/
+            if(KeyFlag == 1)       //进入采样频率设置                                  
+                 state = 2;
+            
+            if(KeyFlag == 2)       //进入上报频率设置                           
+                 state = 3;
+
+             if(KeyFlag == 3)       //进入上报频率设置      
+             {                   
+                 state = 1;
+                 state1_KM= 0;
+             }
+
+            if(KeyFlag == 4)       // 进入频率设置     
             {
+                 EEPROM.write(1, 0);delay(1);  
+                 EEPROM.commit();delay(1);  //在写好所有的更改之后，保存更改的数据
+                 EEPROM.write(40, 0);delay(1);  
                  EEPROM.write(20, 0);delay(1);  
                  EEPROM.commit();delay(1);  //在写好所有的更改之后，保存更改的数据
                  EEPROM.write(40, 0);delay(1);  
                  EEPROM.commit();delay(1);  //在写好所有的更改之后，保存更改的数据
+                 EEPROM.write(60, 2);delay(1);  
+                 EEPROM.commit();delay(1);  //在写好所有的更改之后，保存更改的数据
+                 EEPROM.write(80, 2);delay(1);  
+                 EEPROM.commit();delay(1);  //在写好所有的更改之后，保存更改的数据
+                 SamplingDate = 2; EscalationDate = 2;
                  state = 1;
-                 state1_KM= 0;
+                 state1_KM= 0; //标记  是空模式还是满模式
             }
 /*  按键处理函数，判断按键信号标志位。  摁下后分别实现什么操作，改变什么状态标志位  */
           //   if(KeyFlag == 1)    //摁下第一个键切换连续和单次状态
@@ -136,69 +149,69 @@ void BLE_init()  //蓝牙初始化
 /*
   雷达广播服务
   用来发送需要发送的数据
-*/
-void BLE_Serve() //
-{
-        // 已连接
- if (deviceConnected)
-  {    
-        //将雷达的距离或者信号强度数据转化成字符型存入数组
-        int TempData = 0;
-        if(!Distance_Strength) //根据状态选择发送的数据内容
-           TempData = Lidar.strength;
-          else
-           TempData = Lidar.distance;
-        //数据处理 将整型数据按位转化为字符型存入数组  
-        int numCopy = TempData;
-        int digitCount = 0;
-         while (numCopy != 0) {
-            numCopy /= 10;
-            digitCount++;
-         }       
-          uint8_t digits[4] = {0}; // 用于存放每一位数字的数组
-          for (int i = 0; i < digitCount; i++) {
-            digits[i] = (char)(TempData % 10 + '0');
-            TempData /= 10;
-           }
-           if( digitCount == 0){
-              digits[0] = '0';
-              digitCount = 1;
-           }
-      //////////////////////////////////
-      if(Distance_Strength)  //发送文本内容
+// */
+// void BLE_Serve() //
+// {
+//         // 已连接
+//  if (deviceConnected)
+//   {    
+//         //将雷达的距离或者信号强度数据转化成字符型存入数组
+//         int TempData = 0;
+//         if(!Distance_Strength) //根据状态选择发送的数据内容
+//            TempData = Lidar.strength;
+//           else
+//            TempData = Lidar.distance;
+//         //数据处理 将整型数据按位转化为字符型存入数组  
+//         int numCopy = TempData;
+//         int digitCount = 0;
+//          while (numCopy != 0) {
+//             numCopy /= 10;
+//             digitCount++;
+//          }       
+//           uint8_t digits[4] = {0}; // 用于存放每一位数字的数组
+//           for (int i = 0; i < digitCount; i++) {
+//             digits[i] = (char)(TempData % 10 + '0');
+//             TempData /= 10;
+//            }
+//            if( digitCount == 0){
+//               digits[0] = '0';
+//               digitCount = 1;
+//            }
+//       //////////////////////////////////
+//       if(Distance_Strength)  //发送文本内容
     
-       {
-        pTxCharacteristic->setValue("距离："); // 发送 "Dist:"  
-        pTxCharacteristic->notify();              // 广播
-       }
-       else
+//        {
+//         pTxCharacteristic->setValue("距离："); // 发送 "Dist:"  
+//         pTxCharacteristic->notify();              // 广播
+//        }
+//        else
           
-       {
-        pTxCharacteristic->setValue("信号强度："); // 发送 "Strength:"  
-        pTxCharacteristic->notify();              
-       }
+//        {
+//         pTxCharacteristic->setValue("信号强度："); // 发送 "Strength:"  
+//         pTxCharacteristic->notify();              
+//        }
        
-       for (int i = digitCount - 1; i >= 0; i--) 
-       {
-        pTxCharacteristic->setValue(&digits[i], 1); // 发送 雷达距离数据
-        pTxCharacteristic->notify();             
-        Lidar.receiveComplete = false;
-       }   
-    }
+//        for (int i = digitCount - 1; i >= 0; i--) 
+//        {
+//         pTxCharacteristic->setValue(&digits[i], 1); // 发送 雷达距离数据
+//         pTxCharacteristic->notify();             
+//         Lidar.receiveComplete = false;
+//        }   
+//     }
 
-    //   断开连接
-    if (!deviceConnected && oldDeviceConnected)
-    {  
-        Serial.println(" 已断开连接 ");
-        delay(1000);                  // 留时间给蓝牙缓冲
-        pServer->startAdvertising(); // 重新广播
-        Serial.println(" 开始广播 ");
-        oldDeviceConnected = deviceConnected;
-    }
+//     //   断开连接
+//     if (!deviceConnected && oldDeviceConnected)
+//     {  
+//         Serial.println(" 已断开连接 ");
+//         delay(1000);                  // 留时间给蓝牙缓冲
+//         pServer->startAdvertising(); // 重新广播
+//         Serial.println(" 开始广播 ");
+//         oldDeviceConnected = deviceConnected;
+//     }
 
-    //  正在连接
-    if (deviceConnected && !oldDeviceConnected)
-    {
-        oldDeviceConnected = deviceConnected;
-    }
-}
+//     //  正在连接
+//     if (deviceConnected && !oldDeviceConnected)
+//     {
+//         oldDeviceConnected = deviceConnected;
+//     }
+// }
