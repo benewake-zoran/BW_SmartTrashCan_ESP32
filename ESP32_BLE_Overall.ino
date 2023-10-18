@@ -9,13 +9,22 @@
 #include "com.h"
 #include "date.h"
 #include "BLE_RXTX.h"
+#include "HardwareSerial.h"   
 
 hw_timer_t* timer= NULL;  //定义存放定时器的指针
-uint8_t TIM = 0 , TIM1 = 0 ,TIM2 = 0; //定时器参数 用来给采样频率和上报频率做参数
+uint8_t TIM = 0 , TIM1 = 1 ,TIM2 = 0; //定时器参数 用来给采样频率和上报频率做参数
 void IRAM_ATTR onTimer();
 
+#define UART_FULL_THRESH_DEFAULT 2048         //修改缓冲区大小，这个是HardwareSerial.h文件中说的修改方法，我试了，并没有发挥作用
+#define CJ_RxPin 3                //设置RX管脚
+#define CJ_TxPin 1                //设置TX管脚
+HardwareSerial Serial_CJ(0);       //定向串口0
+void Collect_Callback();
+
 void setup() {
-  Serial.begin(115200); //开启串口0
+  Serial2.begin(115200); //开启串口2 用作雷达数据读取
+  Serial_CJ.begin(115200,SERIAL_8N1,CJ_RxPin,CJ_TxPin);  //初始化串口0，初始化参数可以去HardwareSerial.h文件中查看
+	Serial_CJ.onReceive(Collect_Callback);    //定义串口中断函数
   EEPROM.begin(4096);    //申请空间，传入参数为size，为需要读写的数据字节最大地址+1，取值1~4096；
   BLE_init();           //蓝牙初始化
   
@@ -55,7 +64,7 @@ void loop() {
   }
 
   
-  
+   SerialInterruptHandle();   //处理串口中断传出的信息
    Errorback();//检测系统可能遇到的错误
 }
 
@@ -73,3 +82,59 @@ void IRAM_ATTR onTimer()
     TIM2 = 0;
    }
 }
+
+
+void Collect_Callback(){               
+  static char i = 0;
+  char j = 0;
+  int checksum = 0;   
+   static int rx1[5] ;                 
+  while(Serial_CJ.available() > 0){                 //用While判断缓冲区是否有内容
+    rx1[i] = Serial_CJ.read();
+    if (rx1[0] != 0x5B) {
+      i = 0;
+    }else if(i == 1 && rx1[1] != 0x05){
+      i = 0;
+    }else if(i == 4 ){
+    for (j = 0; j < 4; j++) {
+      checksum += rx1[j];      //计算校验和
+    }
+    if (rx1[4] == checksum) {
+        
+        switch(rx1[2]) 
+        {
+          case 0x01 : if(rx1[3])                       
+                        SerialInterrupt = 2;                      
+                      else                      
+                        SerialInterrupt = 1;
+                     break;
+          case 0x02 :SerialInterrupt = 3; break;
+          case 0x03 :SerialInterrupt = 4; 
+                      if(rx1[3]>=0x01) {
+                        SamplingDate   = rx1[3] + 1;
+                        //Serial_CJ.print(SamplingDate); 
+                        EEPROM.write(60, SamplingDate);delay(1);  
+                        EEPROM.commit();delay(1) ;
+                        Serial_CJ.print("已成功更改");
+                        }break;
+          case 0x04 :SerialInterrupt = 5; 
+                     if(rx1[3]>=0x01) {
+                        EscalationDate   = rx1[3] + 1; 
+                        //Serial_CJ.print(EscalationDate);
+                        EEPROM.write(80, EscalationDate);delay(1);  
+                        EEPROM.commit();delay(1) ;
+                        Serial_CJ.print("已成功更改");
+                        }break;
+        } 
+      }
+      i=0;
+
+    }else{
+      i++;
+    }
+  } 
+}
+
+
+
+

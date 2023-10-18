@@ -13,8 +13,8 @@ void getLidarData( TF* Lidar)
   int checksum = 0;
   Lidar->receiveComplete = false; 
   static int rx[9] ;//= {0x59 ,0x59 ,0x2F ,0x00 ,0xC9 ,0x0B ,0x70 ,0x09 ,0x2E};
-  while (Serial.available() > 0) {
-     rx[i] = Serial.read();
+  while (Serial2.available() > 0) {
+     rx[i] = Serial2.read();
     if (rx[0] != 0x59) {
       i = 0;
     } else if (i == 1 && rx[1] != 0x59) {
@@ -34,10 +34,10 @@ void getLidarData( TF* Lidar)
     }
    } 
 }
+
 /* void Printdist(int date)
    功能：将一个多位的整型数据通过蓝牙发送出去
    date ：任意整型数据
-
 */
 void Printdist(int date)
 {
@@ -72,7 +72,6 @@ void Printdist(int date)
 /* void EmptyAndFull( )
    功能：状态1标记垃圾桶的空和满
 */
-
 void EmptyAndFull( ) //状态1标记空和满
 { 
   
@@ -209,20 +208,86 @@ void Escalation()
    }
   }
 }
+void SerialInterruptHandle()
+{
+  switch(SerialInterrupt)
+  {
+    {
+          case 1 :  Serial_CJ.print("!!!!!!!!");
+                    getLidarData(&Lidar);
+                    if(Lidar.receiveComplete == false){
+                      Serial_CJ.print("失败请重试");
+                    }
+                    else{
+                    EmptyDate = Lidar.distance;
+                    EEPROM.write(40, EmptyDate);delay(1);  
+                    EEPROM.commit();delay(1);  //更改垃圾桶空置状态的雷达数据
+                    Serial_CJ.print("已成功更改");
+                    SerialInterrupt = 0;
+                    if(state == 1)
+                       state1_KM=1;
+                    }
+                    break; 
+         case 2 :   Serial_CJ.print("???????");
+                    getLidarData(&Lidar);
+                    if(Lidar.receiveComplete == false){
+                      Serial_CJ.print("失败请重试");
+                    }
+                    else{
+                      FullDate = Lidar.distance; 
+                      EEPROM.write(20, FullDate) ;delay(1);  
+                      EEPROM.commit();delay(1);  //更改垃圾桶满溢状态的雷达数据
+                      Serial_CJ.print("已成功更改");
+                      SerialInterrupt = 0;
+                      if(state == 1)
+                         state = 4;
+                    }
+                    break;
+          case 3 :RestoreSettings();Serial_CJ.print("恢复出厂设置成功，请重新标注垃圾桶空/满状态");SerialInterrupt = 0; break;
+          case 4 :;break;
+          case 5 :;break;
+        } 
 
+  }
+
+}
+
+void RestoreSettings()
+{
+  EEPROM.write(1, 0);delay(1);  
+  EEPROM.commit();delay(1);  //
+  EEPROM.write(40, 0);delay(1);  
+  EEPROM.write(20, 0);delay(1);  
+  EEPROM.commit();delay(1);  //
+  EEPROM.write(40, 0);delay(1);  
+  EEPROM.commit();delay(1);  //
+  EEPROM.write(60, 2);delay(1);  
+  EEPROM.commit();delay(1);  //
+  EEPROM.write(80, 2);delay(1);  
+  EEPROM.commit();delay(1);  //
+  SamplingDate = 2; EscalationDate = 2;
+  state = 1;
+  state1_KM= 0; //标记  是空模式还是满模式
+}
 
 void Errorback()
 {
     if(TIM2%2 == 0) //检查传感器错误并发送的频率
    {
      if(Lidar.receiveComplete == false)          //接收失败
-     {
+     { 
+       Errornum++;
+       if(Errornum>3)
+       {
        pTxCharacteristic->setValue("未检测到雷达!"); 
        pTxCharacteristic->notify();
        getLidarData(&Lidar);
+       }
+     }
+     else
+     {
+      Errornum = 0;
      }
      TIM2++;
-   }
-   
-
+   }   
 }
