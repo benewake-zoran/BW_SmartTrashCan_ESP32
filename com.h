@@ -24,7 +24,7 @@ int  EmptyDate = 0, FullDate = 0, SamplingDate = 2, EscalationDate = 2;//  空\�
 uint8_t state = 1 ;   //状态编号
 uint8_t KeyFlag = 0,SerialInterrupt = 0; //按键信号  KeyFlag
 uint8_t modez = 1,state1_KM=0,Errornum = 0;    //暂时存储KeyFlag的状态，等待按键松开后发来的‘S’
-
+float TrashData = 0; //储存垃圾桶已使用的百分比
 #endif  
 
 

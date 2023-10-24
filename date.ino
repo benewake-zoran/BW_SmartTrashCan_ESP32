@@ -51,12 +51,12 @@ void Printdist(int date)
             numCopy /= 10;
             digitCount++;
          }       
-          uint8_t digits[4] = {0}; // 用于存放每一位数字的数组
+          uint8_t digits[4] = {"0"}; // 用于存放每一位数字的数组
           for (int i = 0; i < digitCount; i++) {
             digits[i] = (char)(TempData % 10 + '0');
             TempData /= 10;
            }
-           if( digitCount == 0){
+           if( date <= 0){
               digits[0] = '0';
               digitCount = 1;
            }
@@ -182,31 +182,50 @@ void SetEscalation()
 */
 void Escalation() 
 {
-   float date;
+   //float date;
    if(TIM%SamplingDate == 0) //采样频率
    {
        getLidarData(&Lidar);
        TIM++;
    }
-  date = ( ( (float)EmptyDate - Lidar.distance ) / ( (float)EmptyDate - FullDate  ) )*100; //转换成百分比
+  TrashData = ( ( (float)EmptyDate - Lidar.distance ) / ( (float)EmptyDate - FullDate  ) )*100; //转换成百分比
+  if(TrashData<0)
+    TrashData=0;
   if(Lidar.receiveComplete == true)  
   {
    if(TIM1%EscalationDate == 0) //上报频率
    {
-     if(date<80)
+     if(TrashData<80)
      {
-       Printdist(date);
+       Printdist(TrashData);
        pTxCharacteristic->setValue("%"); // 
-       pTxCharacteristic->notify();      
-      }
+       pTxCharacteristic->notify();   
+      //  if(lora_idle == true)
+      //   {
+          sprintf(txpacket," %0.0f %%",TrashData);  //start a package
+          Radio.Send( (uint8_t *)txpacket, strlen(txpacket) ); //send the package out	
+          lora_idle = false;
+       // }
+        Radio.IrqProcess();   
+     }
      else
      {
       pTxCharacteristic->setValue("垃圾桶已满!"); // 
-      pTxCharacteristic->notify();    
+      pTxCharacteristic->notify(); 
+      // if(lora_idle == true)
+      //   {
+          sprintf(txpacket,"垃圾桶已满");  //start a package
+          Radio.Send( (uint8_t *)txpacket, strlen(txpacket) ); //send the package out	
+          lora_idle = false;
+       // }
+        Radio.IrqProcess();     
      }
     TIM1++;
    }
   }
+  
+
+
 }
 void SerialInterruptHandle()
 {
