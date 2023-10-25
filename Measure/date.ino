@@ -125,6 +125,7 @@ void EmptyAndFull( ) //状态1标记空和满
 */
 void SetSampling() 
 { 
+  
     if(KeyFlag == 2) 
       KeyFlag = 0;
     if(TIM%2 == 0) //采样频率
@@ -157,6 +158,7 @@ void SetEscalation()
       KeyFlag = 0;
    if(TIM%2 == 0) //采样频率
    {
+    
     pTxCharacteristic->setValue("设置 上报间隔: "); // 
     pTxCharacteristic->notify();
     Printdist(EscalationDate-1);
@@ -298,9 +300,14 @@ void Errorback()
        Errornum++;
        if(Errornum>3)
        {
-       pTxCharacteristic->setValue("未检测到雷达!"); 
-       pTxCharacteristic->notify();
-       getLidarData(&Lidar);
+        pTxCharacteristic->setValue("未检测到雷达!"); 
+        pTxCharacteristic->notify();
+        getLidarData(&Lidar);
+        sprintf(txpacket,"RadarError");  //start a package
+        Radio.Send( (uint8_t *)txpacket, strlen(txpacket) ); //send the package out	
+        lora_idle = false;
+       // }
+        Radio.IrqProcess(); 
        }
      }
      else
