@@ -67,11 +67,14 @@ class MyCallbacks : public BLECharacteristicCallbacks
             
             if(KeyFlag == 2)       //进入上报频率设置                           
                  state = 3;
+                 
+           if(KeyFlag == 8)       //进入预警值设置                           
+                 state = 5;
 
              if(KeyFlag == 3)       //进入上报频率设置      
              {                   
-                 state = 1;
-                 state1_KM= 0;
+                state = 1;
+                state1_KM= 0;
              }
 
             if(KeyFlag == 4)       // 恢复出厂设置  

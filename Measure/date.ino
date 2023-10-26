@@ -65,7 +65,6 @@ void Printdist(int date)
        {
          pTxCharacteristic->setValue(&digits[i], 1); // 发送 雷达距离数据
          pTxCharacteristic->notify();             
-         //Lidar.receiveComplete = false;
        }   
 }
 
@@ -179,8 +178,39 @@ void SetEscalation()
 }
 
 
+/* void SetSampling()
+   功能：状态4设置预警值
+*/
+void SetEarlyWarning() 
+{ 
+  
+    if(KeyFlag == 8) 
+      KeyFlag = 0;
+    if(TIM%2 == 0) //采样频率
+   {
+    pTxCharacteristic->setValue("设置 预警值: "); // 
+    pTxCharacteristic->notify();
+    Printdist(WarningValue);
+    pTxCharacteristic->setValue("%"); // 
+    pTxCharacteristic->notify();
+     TIM++;
+   }
+   switch(KeyFlag)
+   {
+    case 6 : WarningValue++;KeyFlag=0;break;
+    case 7 : WarningValue--;KeyFlag=0;break;
+    case 5 : state = 4;;KeyFlag=0;
+             EEPROM.write(100, WarningValue);delay(1);  
+             EEPROM.commit();delay(1) ;break;//保存采样间隔的数据
+   }
+   if(WarningValue < 1)
+    WarningValue = 1;
+   if(WarningValue>100)
+    WarningValue = 100;
+}
+
 /* void SetEscalation() 
-   功能：状态4  检测状态 并上报和警报
+   功能：状态5  检测状态 并上报和警报
 */
 void Escalation() 
 {
@@ -197,7 +227,7 @@ void Escalation()
   {
    if(TIM1%EscalationDate == 0) //上报频率
    {
-     if(TrashData<80)
+     if(TrashData<WarningValue)
      {
        Printdist(TrashData);
        pTxCharacteristic->setValue("%"); // 
@@ -286,7 +316,9 @@ void RestoreSettings()
   EEPROM.commit();delay(1);  //
   EEPROM.write(80, 2);delay(1);  
   EEPROM.commit();delay(1);  //
-  SamplingDate = 2; EscalationDate = 2;
+  EEPROM.write(100,80);delay(1);  
+  EEPROM.commit();delay(1);  //
+  SamplingDate = 2; EscalationDate = 2;WarningValue = 80;
   state = 1;
   state1_KM= 0; //标记  是空模式还是满模式
 }
