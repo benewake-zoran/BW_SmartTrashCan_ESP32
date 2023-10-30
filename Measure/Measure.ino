@@ -135,14 +135,28 @@ void Collect_Callback(){
                         SamplingDate   = rx1[3] + 1;
                         EEPROM.write(60, SamplingDate);delay(1);  
                         EEPROM.commit();delay(1) ;
-                        Serial_CJ.print("已成功更改");///////////////////////////////////////////////////////////////////////////////
+                        // 发送数据
+                        for(int i = 0 ; i<5;i++)
+                            Serial_CJ.write(rx1[i]);
                         }break;
+                        
           case 0x04 :SerialInterrupt = 5; 
                      if(rx1[3]>=0x01) {
                         EscalationDate   = rx1[3] + 1; 
                         EEPROM.write(80, EscalationDate);delay(1);  
                         EEPROM.commit();delay(1) ;
-                        Serial_CJ.print("已成功更改");
+                        // 发送数据
+                        for(int i = 0 ; i<5;i++)
+                            Serial_CJ.write(rx1[i]);
+                        }break;
+         case 0x05 :SerialInterrupt = 6; 
+                     if(rx1[3]>=0x01 && rx1[3]<0x64) {
+                        WarningValue   = rx1[3] ; 
+                        EEPROM.write(100, WarningValue);delay(1);  
+                        EEPROM.commit();delay(1) ;
+                        // 发送数据
+                        for(int i = 0 ; i<5;i++)
+                            Serial_CJ.write(rx1[i]);
                         }break;
         } 
       }

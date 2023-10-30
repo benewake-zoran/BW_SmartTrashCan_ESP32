@@ -264,39 +264,67 @@ void SerialInterruptHandle()
   switch(SerialInterrupt)
   {
     {
-          case 1 :  Serial_CJ.print("!!!!!!!!");
-                    getLidarData(&Lidar);
+          case 1 :  getLidarData(&Lidar);
                     if(Lidar.receiveComplete == false){
-                      Serial_CJ.print("失败请重试");
+                    for(int i = 0; i < 5;i++ )
+                      Serial_CJ.write(Fail[i]);
+                    SerialInterrupt = 0;
                     }
                     else{
                     EmptyDate = Lidar.distance;
                     EEPROM.write(40, EmptyDate);delay(1);  
                     EEPROM.commit();delay(1);  //更改垃圾桶空置状态的雷达数据
-                    Serial_CJ.print("已成功更改");
+                    Succeed[4] = (byte)(Lidar.distance & 0xFF); // 低字节
+                    Succeed[3] = (byte)((Lidar.distance >> 8) & 0xFF); // 高字节
+                    Succeed[5] = 0x00;
+                    for (int j = 0; j < 5; j++) 
+                    {
+                      Succeed[5] += Succeed[j];      //计算校验和
+                    }
+                    for(int i = 0; i < 6;i++ )
+                    {
+                     Serial_CJ.write(Succeed[i]);
+                    }
                     SerialInterrupt = 0;
                     if(state == 1)
                        state1_KM=1;
                     }
                     break; 
-         case 2 :   Serial_CJ.print("???????");
-                    getLidarData(&Lidar);
+         case 2 :   getLidarData(&Lidar);
                     if(Lidar.receiveComplete == false){
-                      Serial_CJ.print("失败请重试");
+                    for(int i = 0; i < 5;i++ )
+                      Serial_CJ.write(Fail[i]);
+                    SerialInterrupt = 0;
                     }
                     else{
                       FullDate = Lidar.distance; 
                       EEPROM.write(20, FullDate) ;delay(1);  
                       EEPROM.commit();delay(1);  //更改垃圾桶满溢状态的雷达数据
-                      Serial_CJ.print("已成功更改");
+                      Succeed[4] = (byte)(Lidar.distance & 0xFF); // 低字节
+                      Succeed[3] = (byte)((Lidar.distance >> 8) & 0xFF); // 高字节
+                      Succeed[5] = 0x00;
+                      for (int j = 0; j < 5; j++) 
+                      {
+                       Succeed[5] += Succeed[j];      //计算校验和
+                      }
+                      for(int i = 0; i < 6;i++ )
+                      {
+                        Serial_CJ.write(Succeed[i]);
+                      }
                       SerialInterrupt = 0;
                       if(state == 1)
                          state = 4;
-                    }
+                      }
                     break;
-          case 3 :RestoreSettings();Serial_CJ.print("恢复出厂设置成功，请重新标注垃圾桶空/满状态");SerialInterrupt = 0; break;
-          case 4 :;break;
-          case 5 :;break;
+          case 3 :RestoreSettings();
+                   //Serial_CJ.print("恢复出厂设置成功，请重新标注垃圾桶空/满状态");
+                   for(int i = 0; i < 5;i++ )
+                         Serial_CJ.write(Succeed1[i]);
+                   SerialInterrupt = 0; break;
+          case 4 :SerialInterrupt = 0;break;
+          case 5 :SerialInterrupt = 0;break;
+          case 6 :SerialInterrupt = 0;break;
+          
         } 
 
   }

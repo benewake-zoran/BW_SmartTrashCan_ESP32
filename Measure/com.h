@@ -23,8 +23,11 @@ char    Keydate = '0';
 int  EmptyDate = 0, FullDate = 0, SamplingDate = 2, EscalationDate = 2 ,WarningValue = 80;//  空\满状态的雷达数据、采样间隔、上报间隔 单位秒 (n-1)S,最小为2 对应一秒
 uint8_t state = 1 ;   //状态编号
 uint8_t KeyFlag = 0,SerialInterrupt = 0; //按键信号  KeyFlag
-uint8_t modez = 1,state1_KM=0,Errornum = 0;    //暂时存储KeyFlag的状态，等待按键松开后发来的‘S’
+uint8_t modez = 1,state1_KM=0,Errornum = 0;    //暂时存储KeyFlag的状态，等待按键松开后发来的'S'
 float TrashData = 0; //储存垃圾桶已使用的百分比
+uint8_t Succeed[] = {0x5B, 0x05, 0x01 ,0x00, 0x00, 0x61} ;  
+uint8_t Fail[]    = {0x5B, 0x05, 0x00 ,0x00, 0x60} ;  
+uint8_t Succeed1[]    = {0x5B, 0x05, 0x00 ,0x01, 0x60} ;  
 #endif  
 
 
