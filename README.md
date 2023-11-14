@@ -22,10 +22,10 @@
    |     Android手机        |   x1   |
 ## 1.TF-Luna 简要说明
    ![TF-Luna 外观和特点](vx_images/470135116231067.png)
-![TF-Luna 技术规格书](vx_images/2055216249493.png =700x)
+![TF-Luna 技术规格书](vx_images/2055216249493.png )
 **相关链接：https://blog.csdn.net/zoran_wu/article/details/121850480**
 ## 2.WiFi LoRa 32 (V3)
-![背面](vx_images/320405316237360.png =200x)     ![正面](vx_images/396065316257526.png =221x)
+![背面](vx_images/320405316237360.png )     ![正面](vx_images/396065316257526.png )
 
 
 
