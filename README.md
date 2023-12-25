@@ -21,7 +21,7 @@
    |      TF-Luna (TTL)            |   x1   |
    |     Android手机        |   x1   |
 ## 1.TF-Luna 简要说明
-   ![TF-Luna 外观和特点](vx_images/470135116231067.png ){:width="50%"}
+   ![TF-Luna 外观和特点](vx_images/470135116231067.png )
 ![TF-Luna 技术规格书](vx_images/2055216249493.png )
 **相关链接：https://blog.csdn.net/zoran_wu/article/details/121850480**
 ## 2.WiFi LoRa 32 (V3)
@@ -666,6 +666,7 @@ ESP32 检测和显示端完整工程GIthub仓库 https://github.com/CompletelyIn
 
 ### 串口指令表   波特率：115200  
 ![](vx_images/198565209259246.png )
+
 
 
 ---
